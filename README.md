@@ -15,7 +15,7 @@ The following technologies were used for this project:
 	- Spring-WebSocket
 
 ### About
-This project was made to simulate a bank account in order to replace the physical money of games like "Monopoli" and "Banco Imobiliário".
+This project was made to simulate a bank account in order to replace the physical money of games like "Monopoly" and "Banco Imobiliário".
 The application has the option of multiple games, money transfer between players, real-time notifications using websocket and transaction history.
 
 ## Prints
