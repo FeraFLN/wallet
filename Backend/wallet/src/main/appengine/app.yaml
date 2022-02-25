@@ -1,0 +1,7 @@
+runtime: java11
+health_check:
+  enable_health_check: False
+manual_scaling:
+  instances: 1
+network:
+  session_affinity: true

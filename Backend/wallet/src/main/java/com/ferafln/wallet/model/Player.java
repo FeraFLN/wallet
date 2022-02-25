@@ -5,6 +5,8 @@
  */
 package com.ferafln.wallet.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.ferafln.wallet.enums.TypeTransactionEnum;
 import com.ferafln.wallet.model.exception.InsuficientFundsException;
 import com.ferafln.wallet.model.exception.InvalidValueException;
@@ -20,27 +22,24 @@ import java.util.Objects;
  */
 
 public class Player {
-    
+    @JsonInclude(Include.NON_NULL)
     private String name;
-    private int position;
+    @JsonInclude(Include.NON_NULL)
     private int balance;
+    @JsonInclude(Include.NON_NULL)
     private String avata;
+    @JsonInclude(Include.NON_NULL)
     private String color;
+    @JsonInclude(Include.NON_NULL)
     private boolean ready;
+    @JsonInclude(Include.NON_NULL)
     private final Deque<Detail> history = new LinkedList<>();
     
     public Player() {
         
     }
 
-    public int getPosition() {
-        return position;
-    }
-
-    public void setPosition(int position) {
-        this.position = position;
-    }
-
+    
     
     public Player(String name, int balance) {
         this.name = name;
@@ -133,7 +132,7 @@ public class Player {
             return false;
         }
         final Player other = (Player) obj;
-        if (!Objects.equals(this.name.toLowerCase(), other.name.toLowerCase())) {
+        if (!Objects.equals(this.name.toLowerCase().trim(), other.name.toLowerCase().trim())) {
             return false;
         }
         return true;

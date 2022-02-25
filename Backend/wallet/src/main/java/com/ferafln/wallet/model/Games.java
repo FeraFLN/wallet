@@ -8,7 +8,6 @@ package com.ferafln.wallet.model;
 import com.ferafln.wallet.model.exception.GameException;
 import com.ferafln.wallet.model.exception.GameNotFoundException;
 import com.ferafln.wallet.model.exception.InvalidPlayerException;
-import com.ferafln.wallet.socket.Notificator;
 import com.ferafln.wallet.socket.NotificatorSocket;
 import com.ferafln.wallet.socket.impl.NotificationBuillder;
 import java.util.HashMap;
@@ -65,7 +64,6 @@ public class Games {
             throw new GameException("Game has been started.");
         }
         Game g = GAME.get(code);
-        player.setPosition(g.getPlayers().size()+1);
         g.addPlayers(player);        
         return g;
     }

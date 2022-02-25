@@ -5,13 +5,14 @@
  */
 package com.ferafln.wallet.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.ferafln.wallet.dto.TransferDTO;
 import com.ferafln.wallet.model.exception.GameException;
 import com.ferafln.wallet.model.exception.GameNotFoundException;
 import com.ferafln.wallet.model.exception.InvalidPlayerException;
 import com.ferafln.wallet.model.exception.PlayerNotFoundException;
 import com.ferafln.wallet.utils.Util;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -23,12 +24,17 @@ import java.util.List;
  */
 public class Game {
 
+    @JsonInclude(Include.NON_NULL)
     private final Player bank;
+    @JsonInclude(Include.NON_NULL)
     private final List<Player> players = new ArrayList();
+    @JsonInclude(Include.NON_NULL)
     private final String code;
+    @JsonInclude(Include.NON_NULL)
     private int initialValue = 0;
+    @JsonInclude(Include.NON_NULL)
     private boolean startGame = false;
-    private LocalDateTime lastUpdate = LocalDateTime.now();
+
     
     public Game() {
         this.code = Util.randomString();
@@ -56,7 +62,10 @@ public class Game {
         return startGame;
     }
 
-    public void setStartGame(boolean startGame) {
+    public void setStartGame(boolean startGame) throws GameException {
+        if(players.size()<2){
+            throw new GameException("The game must have at least two players!");
+        }
         this.startGame = startGame;
     }
     
@@ -65,6 +74,10 @@ public class Game {
         if (players.contains(player)) {
             throw new InvalidPlayerException("Player already exist.");
         }
+        if(players.stream().anyMatch(p -> p.getColor().equalsIgnoreCase(player.getColor()))){
+            throw new InvalidPlayerException("Color not available.");            
+        }
+        
         if (players.size() > 6) {
             throw new InvalidPlayerException("Game is full.");
         }
@@ -90,22 +103,13 @@ public class Game {
     }
 
     public void leave(String name) throws GameNotFoundException{
-        boolean removed = this.players.removeIf(e->e.getName().equalsIgnoreCase(name));
-        if(removed){
-            Games.SEND_MSG.sendAllExcept("Player "+name+" has left!", code, name);
-            Games.SEND_MSG.disconectNotifier(code, name);
-        }
+       this.players.removeIf(e->e.getName().equalsIgnoreCase(name));
+        
     }
     
     public Player transfer(TransferDTO dTO) throws GameException{
         Player result =  transfer(dTO.getPlayerFrom(),dTO.getPlayerTo(), dTO.getValue());
-        players.stream().sorted();
         players.sort(Collections.reverseOrder(Comparator.comparingInt(Player::getBalance)));
-        int i =1;        
-        for (Player p : players) {
-            p.setPosition(i);
-            i++;
-        }
         return result;
     }
     public Player transfer(String playerFrom, String playerTo, int amount) throws GameException {
@@ -117,8 +121,7 @@ public class Game {
         return pFrom;
     }
     
-    public Player getPlayer(String name) throws PlayerNotFoundException{
-        
+    public Player getPlayer(String name) throws PlayerNotFoundException{        
         return this.bank.getName().equalsIgnoreCase(name)? this.bank: this.players
                 .stream()
                 .filter(e -> e.getName().equalsIgnoreCase(name))

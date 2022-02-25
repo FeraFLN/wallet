@@ -36,14 +36,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/game")
 @CrossOrigin
 public class GameController {
-
-    private static final String CROSS = "http://desktop-ferafln:8080";
-
-    @Autowired
-    private SimpMessagingTemplate template;
+    
+    private static int i = 0;
+    @GetMapping("/test")
+    public ResponseEntity<String> create1()  {
+        i++;
+        return ResponseEntity.ok("Teste fernando "+i);
+    }
 
     @PostMapping("/create")
-    @CrossOrigin
     public ResponseEntity<Game> create() throws GameException {
         return ResponseEntity.ok(Games.createGame());
     }
@@ -51,29 +52,25 @@ public class GameController {
     @PatchMapping("/join/{code}")
     public ResponseEntity<Game> join(@PathVariable String code, @RequestBody Player player) throws GameException {
         Game g = Games.joinGame(code, player);
-        sengPublicMessage(code, MessageUtil.joinMessage(g, player.getName()));        
         return ResponseEntity.ok(g);
     }
-
+//
     @PatchMapping("/initialbalance/{code}/{value}")
     public ResponseEntity<Game> initialValue(@PathVariable String code, @PathVariable int value) throws GameException {
         Game g = Games.setInitialBalance(code, value);
-        sengPublicMessage(code, MessageUtil.initialValueMessage(g));                
         return ResponseEntity.ok(Games.setInitialBalance(code, value));
     }
-
+//
     @PatchMapping("/ready/{code}/{name}")
     public ResponseEntity<Game> ready(@PathVariable String code, @PathVariable String name) throws GameException {
         Games.setReady(code, name);
         Game g = Games.getGame(code);
-        sengPublicMessage(code, MessageUtil.readyMessage(g, name));
         return ResponseEntity.ok(g);
     }
-
+//
     @PatchMapping("/startgame/{code}")
     public ResponseEntity<Game> start(@PathVariable String code) throws GameException {
         Game g = Games.startGame(code);
-        sengPublicMessage(code, MessageUtil.startGameMessage(g));
         return ResponseEntity.ok(g);
     }
 
@@ -81,7 +78,6 @@ public class GameController {
     public ResponseEntity<Game> transfer(@PathVariable String code, @RequestBody TransferDTO transferDTO) throws GameException {
         Games.getGame(code).transfer(transferDTO);
         Game g = Games.getGame(code);
-        sengPublicMessage(code, MessageUtil.sendMoneyMessage(g, transferDTO.getPlayerFrom(), transferDTO.getValue(), transferDTO.getPlayerTo()));
         return ResponseEntity.ok(g);
     }
 
@@ -97,10 +93,9 @@ public class GameController {
     }
 
     @PutMapping("/quit/{code}/{name}")
-    public ResponseEntity quit(@PathVariable String code, @PathVariable String name) throws GameException {
+    public ResponseEntity<Game> quit(@PathVariable String code, @PathVariable String name) throws GameException {
         Games.getGame(code).leave(name);
-        sengPublicMessage(code, MessageUtil.quitGameMessage(Games.getGame(code), name));
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Games.getGame(code));
     }
 
     @DeleteMapping("/endgame/{code}")
@@ -109,7 +104,5 @@ public class GameController {
         return ResponseEntity.ok();
     }
 
-    private void sengPublicMessage(String code, MessageDTO messageDTO) {
-        template.convertAndSendToUser(code, "/chatroom", messageDTO);
-    }
+    
 }
