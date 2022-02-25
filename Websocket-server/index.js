@@ -1,4 +1,4 @@
-const webSocketsServerPort = 8081;
+const webSocketsServerPort = 8080;
 const webSocketServer = require('websocket').server;
 const { MD5 } = require('crypto-js');
 const http = require('http');
