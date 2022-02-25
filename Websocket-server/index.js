@@ -6,7 +6,7 @@ const http = require('http');
 // Spinning the http server and the websocket server.
 const server = http.createServer();
 server.listen(webSocketsServerPort);
-console.log('listening on port 8080');
+console.log('listening on port ${webSocketsServerPort}');
 
 
 const wsServer = new webSocketServer({
@@ -47,6 +47,7 @@ wsServer.on('request', function (request) {
     request.reject();
     return;
   }
+   console.log(params.name+"conectou")
   var userID = MD5(params.codeGame + params.name).toString();
   // console.log(userID)
   // You can rewrite this part of the code to accept only the requests from allowed origin
