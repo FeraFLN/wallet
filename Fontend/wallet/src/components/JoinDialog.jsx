@@ -32,22 +32,23 @@ const colors = [
   }, 
 ];
 
-export default function CustomDialog({ open, submit, setOpen, }) {
+export default function CustomDialog({ open, submit, setOpen }) {
 
   const [code, setCode] = useState("");
   const [nome, setNome] = useState("");
-  const [error, setError] = useState({ open: false, message: "" })
+  // const [error, setError] = useState({ open: false, message: "" })
   const [openDialog, setOpenDialog] = useState(false)
   const [msgError, setMsgError] = useState("")
 
-  const [color, setColor] = React.useState('EUR');
+  const [color, setColor] = useState('');
 
   const handleChange = (event) => {
     setColor(event.target.value);
   };
-
+  
   const showError = (error) => {
     setMsgError(error)
+    setOpen(true)    
     setOpenDialog(true)    
   }
 
@@ -56,13 +57,14 @@ export default function CustomDialog({ open, submit, setOpen, }) {
     setCode("");
     setNome("");
     setMsgError("")
+    setColor("")
     setOpenDialog(false)
   };
   return (
     <div>
       <Dialog open={open} aria-labelledby="form-dialog-title">
         <form onSubmit={(e) => { e.preventDefault(); submit(code, nome,color, handleClose, showError); }}>
-          <MessageDialog severity="error" setOpen={setError} open={openDialog} message={msgError} />
+          <MessageDialog severity="error" setOpen={setOpenDialog} open={openDialog} message={msgError} />
           <DialogTitle id="form-dialog-title">Informe o codígo do jogo.</DialogTitle>
           <DialogContent>
             <Grid container direction="column">
@@ -95,7 +97,7 @@ export default function CustomDialog({ open, submit, setOpen, }) {
                         <Avatar style={dynamicStyle(option.value,'30px')}></Avatar>
                       </Grid>
                       <Grid item>
-                        <Typography variant="body" >{option.label}</Typography>
+                        <Typography variant="body1" >{option.label}</Typography>
                       </Grid>
                     </Grid>
                   </MenuItem>

@@ -1,36 +1,43 @@
 import { Avatar, Button, Divider, Grid, Typography } from '@material-ui/core';
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import image from '../img/wallet.png'
-import { get, patch, post } from '../data/Request'
-import bankIcon from '../img/Bank-icon.png'
+import {patch, post } from '../data/Request'
+
 import JoinDialog from './JoinDialog'
-import { useEffect, useState } from 'react';
-import { sendPublicMessage, WebSocket } from '../data/WebSocket';
-function InitialScreen({setShowBackdrop , setWebSocket,setGame, setPlayer, classes }) {
+import {  useEffect, useState } from 'react';
+
+function InitialScreen({ connectWebSocket, disconnectWebSocket, setShowBackdrop, setGame, setPlayer, classes }) {
 
     const navigate = useNavigate();
     const [showDialog, setShowDialog] = useState(false);
-    
 
+    useEffect(()=>{
+        console.log("useEffect do initalScreen")
+        disconnectWebSocket()
+    },[])
     function openJoinDialog(e) {
         e.preventDefault();
         setShowDialog(true)
     }
 
-    function join(code, nome,color, handleClose, showError) {
-        const p = { name: nome, color:color,balance: null, avata: null, ready: false, history: [] };
+    function join(code, nome, color, handleClose, showError) {
+        const p = { name: nome, color: color, balance: null, avata: null, ready: false, history: [] };
+        setShowBackdrop(true);
+        setShowDialog(false)
         patch("/game/join/" + code, p,
-            (result) => {
-                setPlayer(p);
-                handleClose();
-                setWebSocket(WebSocket(p.name, result.code));
-                setShowBackdrop(true);
-                setTimeout(function () {
+        (result) => {
+            setPlayer(p);
+            setGame(result)
+            connectWebSocket(code,nome,sendJoinMessage(code,nome,result))
+            handleClose();
+            setTimeout(function () {
+                    // sendNotification(sendJoinMessage(code,nome,result))
+                    // sendJoinMessage(code,nome,result)
                     navigate("/join/" + result.code + "/" + p.name);
                 }, 1000);
             },
             (error) => {
-                console.log(error)
+                setShowBackdrop(false);
                 showError(error)
 
             }
@@ -38,15 +45,16 @@ function InitialScreen({setShowBackdrop , setWebSocket,setGame, setPlayer, class
     }
     function createGame(e) {
         e.preventDefault();
-        console.log("Creating a game!")
+        setShowBackdrop(true)
         post("/game/create", null,
             (result) => {
                 setGame(result)
-                WebSocket("Bank", result.code);
+                connectWebSocket(result.code,'Bank')
                 navigate("/game/" + result.code);
             },
             (error) => {
                 console.log(error)
+                setShowBackdrop(false)
             }
         );
 
@@ -85,5 +93,14 @@ function InitialScreen({setShowBackdrop , setWebSocket,setGame, setPlayer, class
 
     );
 }
+const sendJoinMessage = (code, sender, game) => {
+    return {
+        senderName: sender,
+        codeGame: code,
+        json: JSON.stringify(game),
+        message: sender + " conectou!",
+        update: true
+    }
 
+}
 export default InitialScreen;

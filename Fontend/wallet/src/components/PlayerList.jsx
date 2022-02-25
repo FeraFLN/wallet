@@ -1,9 +1,10 @@
 import { Avatar, List, ListItem, ListItemAvatar, ListItemText } from "@material-ui/core"
-import { customStyle, style } from '../style/Css';
+import { customStyle } from '../style/Css';
 import ListCreateSecondaryAction from "./ListCreateSecondaryAction";
 import ListGameSecondaryAction from "./ListGameSecondaryAction";
 import bankIcon from '../img/Bank-icon.png'
-export default function PlayerList({ classes, players, createSecondaryAtcion, createSecondaryReady, gameSecondaryAtcion, openPopup }) {
+
+export default function PlayerList({ classes, players, createSecondaryAtcion, createSecondaryReady, gameSecondaryAtcion, openPopup,deleteAction }) {
 
 
     
@@ -22,7 +23,7 @@ export default function PlayerList({ classes, players, createSecondaryAtcion, cr
                                 }
                             </ListItemAvatar>
                             <ListItemText primary={value.name} />
-                            {!createSecondaryAtcion ? '' : <ListCreateSecondaryAction player={value} ready deleteButton />}
+                            {!createSecondaryAtcion ? '' : <ListCreateSecondaryAction player={value} ready deleteButton  deleteAction={deleteAction}/>}
                             {!createSecondaryReady ? '' : <ListCreateSecondaryAction player={value} ready />}
                             {!gameSecondaryAtcion ? '' : <ListGameSecondaryAction player={value} openPopup={openPopup} />}
 

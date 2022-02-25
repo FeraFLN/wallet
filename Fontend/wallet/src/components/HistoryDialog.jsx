@@ -2,8 +2,8 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mate
 import { useState } from "react";
 import MessageDialog from "./MessageDialog";
 import { makeStyles } from '@material-ui/core/styles';
-import sendMoneyIcon from '../img/send-money1.png'
-import receiveMoneyIcon from '../img/receive-money.png'
+import sendMoneyIcon from '../img/send-money2.png'
+import receiveMoneyIcon from '../img/receive-money2.png'
 import { Avatar, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material";
 
 const useStyles = makeStyles((theme) => ({
@@ -21,16 +21,9 @@ const useStyles = makeStyles((theme) => ({
 export default function HistoryDialog({ open, setOpen, history }) {
     const classes = useStyles();
     const [error, setError] = useState({ open: false, message: "" })
-    const showError = (error) => {
-        console.log('show Error')
-        setError({ open: true, message: error })
-    }
-
+   
     const handleClose = () => {
         setOpen(false);
-        console.log('fechar')
-        // setCode("");
-        // setNome("");
         setError({ open: false, message: "" })
     };
     return (
@@ -58,7 +51,7 @@ export default function HistoryDialog({ open, setOpen, history }) {
 
                     </DialogContent>
                     <DialogActions>
-                        <Button variant="contained" color="secondary" onClick={() => handleClose()} color="primary">
+                        <Button variant="contained" color="secondary" type="submit" color="primary">
                             Fechar
                         </Button>
                     </DialogActions>

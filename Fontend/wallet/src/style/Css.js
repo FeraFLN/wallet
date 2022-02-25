@@ -1,4 +1,4 @@
-import { makeStyles } from '@material-ui/core/styles';
+
 
 export const  dynamicStyle= (value,size) => {
     return ({
@@ -38,7 +38,7 @@ export const style = (theme) => ({
         borderRadius: 10,
         minWidth: 380,
         width: 380,
-        height: "650px",
+        height: "700px",
         marginRight: 5,
         marginLeft: 5,
 
@@ -79,7 +79,7 @@ export const style = (theme) => ({
         borderRadius: '10px 10px 0 0 ',
     },
     bodyGrid: {
-        height: '535px',
+        height: '585px',
     },
 
     mainBodyGrid: {

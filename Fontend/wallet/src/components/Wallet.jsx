@@ -5,13 +5,17 @@ import PlayerList from "./PlayerList";
 import { useEffect, useState } from "react";
 import CustomDialog from "./CustomDialog";
 import NumberFormat from "react-number-format";
-import { get, patch } from "../data/Request";
+import { del, get, patch, put } from "../data/Request";
 import { AssignmentOutlined, ExitToApp, Refresh } from "@mui/icons-material";
 import HistoryDialog from "./HistoryDialog";
 import { Notification } from "./Notification";
 import { customStyle } from "../style/Css";
+import LogoutIcon from '@mui/icons-material/Logout';
+import { sendQuitMessage } from "./JoinGame";
+import { sendEndGameMessage } from "./HostGame";
+import MessageDialog from "./MessageDialog";
 
-export default function Wallet({ classes }) {
+export default function Wallet({classes, connectWebSocket, sendNotification, setShowBackdrop, notification,callBackUpdateScreen }) {
     const navigate = useNavigate();
     const { name } = useParams()
     const { code } = useParams()
@@ -20,14 +24,25 @@ export default function Wallet({ classes }) {
     const [player, setPlayer] = useState();
     const [players, setPlayers] = useState();
     const [openHistory, setOpenHistory] = useState(false)
+    const [error, setError] = useState({ open: false, message: "" })
 
     useEffect(() => {
+        const refresh = () => {
+            get("/game/" + code, null, (game) => {
+                responseValue(game)
+            }, (error) => {
+                navigate("/")
+            })
+        }
         refresh();
+        connectWebSocket(code,name)
+        callBackUpdateScreen(responseValue)
     }, [])
-    const receiveMessage = (msg) => {
-        responseValue(msg.game)
 
-    }
+    // const receiveMessage = (msg) => {
+    //     responseValue(msg.game)
+
+    // }
     const responseValue = (game) => {
         var list = [];
         if (name === "Bank") {
@@ -41,12 +56,38 @@ export default function Wallet({ classes }) {
         Array.prototype.push.apply(list, game.players);
         setPlayers(list)
     }
-    async function refresh(msg) {
-        await get("/game/" + code, null, (game) => {
-            responseValue(game)
+    function sairAction() {
+        if(name==="Bank"){
+            endGame();
+        }else{
+            quitGame();
+        }
+    }
+
+    function endGame() {
+        console.log('Ending game!')
+        del("/game/endgame/" + code,  () => {
+            console.log("retorno do fim do jogo!")
+            sendNotification(sendEndGameMessage(code))
+            navigate("/" );
         }, (error) => {
-            navigate("/")
+            setError({ open: true, message: error })
         })
+    }
+
+    function quitGame() {
+        setShowBackdrop(true)
+        put("/game/quit/" + code + "/" + name, null, (response) => {
+            setTimeout(() => {
+                setShowBackdrop(false)
+                sendNotification(sendQuitMessage(name,code,response))
+                setShowBackdrop(false)
+            }, 1000);
+        }, (error) => {
+            setError({ open: true, message: error })
+            setShowBackdrop(false)
+        })
+        navigate("/")
     }
     function openPopup(player) {
         if (player.name === name) {
@@ -58,15 +99,19 @@ export default function Wallet({ classes }) {
     }
     function submitPopup(value, handleClose, showError) {
         console.log("enviando...")
+        setShowBackdrop(true)
         const t = { playerFrom: name, playerTo: playerToName, value: value };
         patch("/game/transfer/" + code, t,
             (result) => {
                 responseValue(result)
                 handleClose();
+                setShowBackdrop(false)
+                sendNotification(sendMoneyMessage(name,playerToName,value,result))
             },
             (error) => {
                 console.log(error)
                 showError(error)
+                setShowBackdrop(false)
 
             }
         )
@@ -89,13 +134,14 @@ export default function Wallet({ classes }) {
             <Grid container justifyContent="flex-start" alignItems="stretch" alignContent="stretch" direction="column" className={classes.bodyGrid}>
                 <Grid container direction="row" justifyContent="flex-start" alignContent="stretch" alignItems="stretch" >
                     <Grid item style={{ width: "50%" }}>
-                        <Button variant="contained" fullWidth><ExitToApp /></Button>
+                        <Button variant="contained" onClick={()=>{sairAction()}} fullWidth startIcon={<LogoutIcon />}>Sair</Button>
                     </Grid>
                     <Grid item style={{ width: "50%" }}>
-                        <Button variant="contained" onClick={() => setOpenHistory(true)} fullWidth><AssignmentOutlined /></Button>
+                        <Button variant="contained" onClick={() => setOpenHistory(true)} fullWidth endIcon={<AssignmentOutlined />}>Transações</Button>
                     </Grid>
                 </Grid>
-                <Notification sender={name} codeGame={code} actionReceive={receiveMessage} />
+                {notification}
+                <MessageDialog severity="error" setOpen={setError} open={error.open} message={error.message} />
                 <Grid item >
                     <PlayerList classes={classes} gameSecondaryAtcion players={players} openPopup={openPopup} />
                 </Grid>
@@ -103,4 +149,13 @@ export default function Wallet({ classes }) {
         </Grid>
     );
 
+}
+const sendMoneyMessage = (sender, receiver, value, game) => {
+    return {
+        senderName: sender,
+        codeGame: game.code,
+        message: sender + ' enviou ' + value + ' para ' + receiver,
+        json: JSON.stringify(game),
+        update: true
+    }
 }

@@ -1,55 +1,19 @@
+import { w3cwebsocket as W3cwebsocket } from 'websocket';
 
-import SockJS from 'sockjs-client';
-import Stomp from 'stompjs';
-
-let stomp = null;
-
-export async function WebSocket(sender,codeGame) {
-    console.log(stomp?true:false)
-    connect(sender,codeGame)
-    // connect(sender,codeGame);
-    // if(!isAlived()){
-    // setTimeout(connect(sender,codeGame),1000) 
-    // }
-}
-
-const connect = async(sender,codeGame)=>{
-    var sock = new SockJS('http://192.168.1.21:8080/wallet/ws'); 
-    // var sock = new SockJS('http://localhost:8080/ws');
-    stomp = Stomp.over(sock);  
-    const x = await stomp.connect({}, (frame) =>{
-        console.log('Conectado:  ');
-        stomp.subscribe('/user/'+codeGame+"/chatroom",(response)=>{
-            // readMessage(sender, actionReceive, setOpen, setMessage,response)
-            readMessage(response)
-        });         
-    },(err)=>{
-        console.log("Erro")
-        console.log(err)
-    });
-}
-export function getStomp(){
-    return stomp;
-}
-export function setMessageReader(messageReader){
-    readMessage = messageReader;
-}
-let readMessage = (response)=>{
-    console.log(response)
-}
-export function sendPublicMessage(msg){
-    stomp?.send("/app/message", {}, JSON.stringify(msg));
-}
-
-export function isAlived(){
-    if(stomp){
-        return true;
+export async function WebSocket(codeGame,sender,readMessage,callBackClient) {
+    const client = new W3cwebsocket('wss://socket.walletsgame.com?token=12345&codeGame='+codeGame+'&name='+sender) 
+    // const client = new W3cwebsocket('ws://127.0.0.1:8000?token=12345&codeGame='+codeGame+'&name='+sender)
+    console.log(client?.readyState,W3cwebsocket.CONNECTING,W3cwebsocket.CLOSED,W3cwebsocket.OPEN,W3cwebsocket.CLOSING)
+    client.onmessage =(message)=>{
+        let confirmConection = JSON.parse(message.data)
+        console.log("recebendo mensagem!",confirmConection)
+        readMessage(message);
     }
-    return false;
-}
-export const closeConection = () => {
-    // console.log(sock)
-    // sock?.close()
-    // console.log("Conection closed.")
-    // console.log(sock)
+    client.onclose = ()=>{
+        console.log("desconectou")
+    }
+    client.onopen = ()=>{
+        console.log("conectado ao novo websocket server! "+client.readyState)
+        callBackClient(client)
+    }
 }
