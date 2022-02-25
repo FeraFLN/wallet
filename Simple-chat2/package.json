@@ -1,0 +1,17 @@
+{
+  "name": "simple-chat2",
+  "version": "0.0.1",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/langarabrian/simple-chat2.git"
+  },
+  "description": "my first socket.io app",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^4.1.2"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
