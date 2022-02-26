@@ -1,6 +1,6 @@
 package com.ferafln.wallet;
 
-import com.ferafln.wallet.socket.impl.NotificationBuillder;
+import com.ferafln.wallet.thread.GameCollectorThread;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class WalletApplication {
 
     public static void main(String[] args) {
-//        NotificationBuillder.startSocket();
+        GameCollectorThread.getInstance().start();
         SpringApplication.run(WalletApplication.class, args);
     }
 

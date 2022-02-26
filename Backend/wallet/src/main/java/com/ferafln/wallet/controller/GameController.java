@@ -38,6 +38,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class GameController {
     
     private static int i = 0;
+    private Games games = Games.getInstance();
+    
     @GetMapping("/test")
     public ResponseEntity<String> create1()  {
         i++;
@@ -46,61 +48,55 @@ public class GameController {
 
     @PostMapping("/create")
     public ResponseEntity<Game> create() throws GameException {
-        return ResponseEntity.ok(Games.createGame());
+        return ResponseEntity.ok(games.createGame());
     }
 
     @PatchMapping("/join/{code}")
     public ResponseEntity<Game> join(@PathVariable String code, @RequestBody Player player) throws GameException {
-        Game g = Games.joinGame(code, player);
+        Game g = games.joinGame(code, player);
         return ResponseEntity.ok(g);
     }
 //
     @PatchMapping("/initialbalance/{code}/{value}")
     public ResponseEntity<Game> initialValue(@PathVariable String code, @PathVariable int value) throws GameException {
-        Game g = Games.setInitialBalance(code, value);
-        return ResponseEntity.ok(Games.setInitialBalance(code, value));
+        Game g = games.setInitialBalance(code, value);
+        return ResponseEntity.ok(g);
     }
 //
     @PatchMapping("/ready/{code}/{name}")
     public ResponseEntity<Game> ready(@PathVariable String code, @PathVariable String name) throws GameException {
-        Games.setReady(code, name);
-        Game g = Games.getGame(code);
-        return ResponseEntity.ok(g);
+        return ResponseEntity.ok(games.setReady(code, name));
     }
 //
     @PatchMapping("/startgame/{code}")
     public ResponseEntity<Game> start(@PathVariable String code) throws GameException {
-        Game g = Games.startGame(code);
-        return ResponseEntity.ok(g);
+        return ResponseEntity.ok(games.startGame(code));
     }
 
     @PatchMapping("/transfer/{code}")
     public ResponseEntity<Game> transfer(@PathVariable String code, @RequestBody TransferDTO transferDTO) throws GameException {
-        Games.getGame(code).transfer(transferDTO);
-        Game g = Games.getGame(code);
-        return ResponseEntity.ok(g);
+        return ResponseEntity.ok(games.transfer(code,transferDTO));
     }
 
-    @GetMapping("/player/{code}/{name}")
-    public ResponseEntity<GamePlayerDTO> player(@PathVariable String code, @PathVariable String name) throws GameException {
-        GamePlayerDTO result = new GamePlayerDTO(Games.getGame(code), Games.getGame(code).getPlayer(name));
-        return ResponseEntity.ok(result);
-    }
+//    @GetMapping("/player/{code}/{name}")
+//    public ResponseEntity<GamePlayerDTO> player(@PathVariable String code, @PathVariable String name) throws GameException {
+//        GamePlayerDTO result = new GamePlayerDTO(Games.getGame(code), Games.getGame(code).getPlayer(name));
+//        return ResponseEntity.ok(result);
+//    }
 
     @GetMapping("/{code}")
     public ResponseEntity<Game> game(@PathVariable String code) throws GameException {
-        return ResponseEntity.ok(Games.getGame(code));
+        return ResponseEntity.ok(games.getGame(code));
     }
 
     @PutMapping("/quit/{code}/{name}")
     public ResponseEntity<Game> quit(@PathVariable String code, @PathVariable String name) throws GameException {
-        Games.getGame(code).leave(name);
-        return ResponseEntity.ok(Games.getGame(code));
+        return ResponseEntity.ok(games.leaveGame(code,name));
     }
 
     @DeleteMapping("/endgame/{code}")
     public BodyBuilder endgame(@PathVariable String code) throws GameException {
-        Games.removeGame(code);
+        games.endGame(code);
         return ResponseEntity.ok();
     }
 

@@ -13,16 +13,21 @@ import com.ferafln.wallet.model.exception.GameNotFoundException;
 import com.ferafln.wallet.model.exception.InvalidPlayerException;
 import com.ferafln.wallet.model.exception.PlayerNotFoundException;
 import com.ferafln.wallet.utils.Util;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.Setter;
 
 /**
  *
  * @author feraf
  */
-public class Game {
+@Data
+public class Game{
 
     @JsonInclude(Include.NON_NULL)
     private final Player bank;
@@ -33,100 +38,88 @@ public class Game {
     @JsonInclude(Include.NON_NULL)
     private int initialValue = 0;
     @JsonInclude(Include.NON_NULL)
+    @Setter(value=AccessLevel.NONE)
     private boolean startGame = false;
 
-    
     public Game() {
         this.code = Util.randomString();
-        this.bank= new Player("Bank", 50000000);
+        this.bank = new Player("Bank", 50000000);
 
     }
 
-    public int getInitialValue() {
-        return initialValue;
-    }
-
-    public void setInitialValue(int initialValue) {
-        this.initialValue = initialValue;
-    }
-
-    public Player getBank() {
-        return bank;
-    }   
-
-    public String getCode() {
-        return code;
-    }
-
-    public boolean isStartGame() {
-        return startGame;
-    }
-
-    public void setStartGame(boolean startGame) throws GameException {
-        if(players.size()<2){
+    public void startGame() throws GameException {
+        if (players.size() < 2) {
             throw new GameException("The game must have at least two players!");
         }
-        this.startGame = startGame;
+        if (!isReady()) {
+            throw new GameException("Some players are not ready yet!");
+        }
+        if (initialValue<1000000) {
+            throw new GameException("Initial value must have at least 1000000!");
+        }
+        startGame = true;
     }
-    
 
-    public void addPlayers(Player player) throws InvalidPlayerException {
+    public void addPlayers(Player player) throws GameException {
         if (players.contains(player)) {
             throw new InvalidPlayerException("Player already exist.");
         }
-        if(players.stream().anyMatch(p -> p.getColor().equalsIgnoreCase(player.getColor()))){
-            throw new InvalidPlayerException("Color not available.");            
+        if (players.stream().anyMatch(p -> p.getColor().equalsIgnoreCase(player.getColor()))) {
+            throw new InvalidPlayerException("Color not available.");
         }
-        
+
         if (players.size() > 6) {
             throw new InvalidPlayerException("Game is full.");
+        }
+        if (isStartGame()) {
+            throw new GameException("Game has been started.");
         }
         player.setBalance(initialValue);
         this.players.add(player);
     }
-    
-    public boolean isReady(){
-        return players.stream().allMatch(e->e.isReady());
+
+    public boolean isReady() {
+        return players.stream().allMatch(e -> e.isReady());
     }
 
-    public void setInitialBalance(int value){
-        this.initialValue= value;
-        this.players.stream().forEach(e->e.setBalance(value));
+    public void setInitialBalance(int value) {
+        this.initialValue = value;
+        this.players.stream().forEach(e -> e.setBalance(value));
     }
-    public Player setReady(String name) throws PlayerNotFoundException{
+
+    public Player setReady(String name) throws PlayerNotFoundException {
         Player p = getPlayer(name);
         p.setReady(!p.isReady());
-        return p;       
+        return p;
     }
+
     public List<Player> getPlayers() {
         return new ArrayList(this.players);
     }
 
-    public void leave(String name) throws GameNotFoundException{
-       this.players.removeIf(e->e.getName().equalsIgnoreCase(name));
-        
+    public boolean leave(String name){
+        return this.players.removeIf(e -> e.getName().equalsIgnoreCase(name));
+
     }
-    
-    public Player transfer(TransferDTO dTO) throws GameException{
-        Player result =  transfer(dTO.getPlayerFrom(),dTO.getPlayerTo(), dTO.getValue());
+
+    public Player transfer(TransferDTO dTO) throws GameException {
+        Player result = transfer(dTO.getPlayerFrom(), dTO.getPlayerTo(), dTO.getValue());
         players.sort(Collections.reverseOrder(Comparator.comparingInt(Player::getBalance)));
         return result;
     }
+
     public Player transfer(String playerFrom, String playerTo, int amount) throws GameException {
         Player pFrom = getPlayer(playerFrom);
-        Player pTo = getPlayer(playerTo);
-        pFrom.sendMoney(amount, pTo);
-        Games.SEND_MSG.sendTo(playerFrom+" sent $"+amount+".", code, playerTo);
-        Games.SEND_MSG.sendTo(playerTo+" recive the money.", code, playerFrom);
+        pFrom.sendMoney(amount, getPlayer(playerTo));
         return pFrom;
     }
-    
-    public Player getPlayer(String name) throws PlayerNotFoundException{        
-        return this.bank.getName().equalsIgnoreCase(name)? this.bank: this.players
+
+    public Player getPlayer(String name) throws PlayerNotFoundException {
+        return this.bank.getName().equalsIgnoreCase(name) ? this.bank : this.players
                 .stream()
                 .filter(e -> e.getName().equalsIgnoreCase(name))
                 .findFirst()
-                .orElseThrow(() -> new PlayerNotFoundException("Player '"+name+"' not found."));
+                .orElseThrow(() -> new PlayerNotFoundException("Player '" + name + "' not found."));
     }
 
 }

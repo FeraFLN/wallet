@@ -5,6 +5,7 @@
  */
 package com.ferafln.wallet.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.ferafln.wallet.enums.TypeTransactionEnum;
@@ -15,14 +16,18 @@ import java.beans.Transient;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.Setter;
 
 /**
  *
  * @author feraf
  */
-
+@Data
 public class Player {
     @JsonInclude(Include.NON_NULL)
+    @Setter(value=AccessLevel.NONE)
     private String name;
     @JsonInclude(Include.NON_NULL)
     private int balance;
@@ -33,60 +38,26 @@ public class Player {
     @JsonInclude(Include.NON_NULL)
     private boolean ready;
     @JsonInclude(Include.NON_NULL)
-    private final Deque<Detail> history = new LinkedList<>();
-    
+    private final Deque<Detail> history =  new LinkedList<>();
+    @JsonIgnore
+    private final int historySize = 20;
     public Player() {
         
     }
 
-    
-    
     public Player(String name, int balance) {
         this.name = name;
         this.balance = balance;
     }
 
   
-    public String getAvata() {
-        return avata;
-    }
-
-    public void setAvata(String avata) {
-        this.avata = avata;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public boolean isReady() {
-        return ready;
-    }
-
-    public void setReady(boolean ready) {
-        this.ready = ready;
-    }
-   
-    
-    public String getName(){
-        return this.name;
-    }
-
-    public void setBalance(int balance) {
-        this.balance = balance;
-    }
-    
     @Transient
     public void sendMoney(int value, Player player) throws InsuficientFundsException, InvalidValueException{
         checkValue(value);
         if((this.balance-value)<0){
             throw new InsuficientFundsException("Insuficient Balance!");
         }
-        this.history.addFirst(new Detail(TypeTransactionEnum.S, value, player.getName()));
+        addToHistory(new Detail(TypeTransactionEnum.S, value, player.getName()));
         this.balance -=value;
         player.reciveMoney(value,this.name);
         
@@ -95,14 +66,16 @@ public class Player {
     void reciveMoney(int value,String playerFrom) throws InvalidValueException{
         checkValue(value);
         this.balance += value;
-        this.history.addFirst(new Detail(TypeTransactionEnum.R, value, playerFrom));        
+        addToHistory(new Detail(TypeTransactionEnum.R, value, playerFrom));        
     }
     
-    public int getBalance(){
-        return balance;
-    }
-
     
+    private void addToHistory(Detail detail){
+        this.history.addFirst(detail);
+        if(this.history.size()>historySize){
+            this.history.removeLast();
+        }
+    }
     private void checkValue(int value) throws InvalidValueException{
         if(value <=0){
             throw new InvalidValueException("The value can not be negative.");
@@ -135,8 +108,10 @@ public class Player {
         if (!Objects.equals(this.name.toLowerCase().trim(), other.name.toLowerCase().trim())) {
             return false;
         }
+        
         return true;
     }
+    @Override
     public String toString(){
         return new Gson().toJson(this);
     }    

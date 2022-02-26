@@ -58,15 +58,13 @@ public class PlayerNotifier implements Notifier {
                         break;
                     }
                     if (p != null) {
-                        Games.getGame(p.getToken());
+//                        Games.getGame(p.getToken());
                         name = p.getName();
                         code = p.getToken();
                         loged = true;
                     }
                 } catch (IOException ex) {
                     LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-                } catch (GameNotFoundException e) {
-                    this.writer.println("[ERROR] Game not found.");
                 }
             }
         }).start();

@@ -5,71 +5,119 @@
  */
 package com.ferafln.wallet.model;
 
+import com.ferafln.wallet.dto.TransferDTO;
 import com.ferafln.wallet.model.exception.GameException;
 import com.ferafln.wallet.model.exception.GameNotFoundException;
 import com.ferafln.wallet.model.exception.InvalidPlayerException;
-import com.ferafln.wallet.socket.NotificatorSocket;
-import com.ferafln.wallet.socket.impl.NotificationBuillder;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import lombok.Getter;
+import lombok.Setter;
+import com.ferafln.wallet.model.exception.PlayerNotFoundException;
 
 /**
  *
  * @author feraf
  */
-public class Games {
-    private final static Map<String, Game> GAME = new HashMap<>();
+public class Games{
+    private final static Map<String, ExpirableGame> GAME = new HashMap<>();
+    private static Games games = null;
     
-    public final static NotificatorSocket SEND_MSG = NotificationBuillder.getInstance();
+    private Games(){}
     
-    public static void removeGame(String codeGame ){ 
+    public static Games getInstance(){
+        if(games==null){
+            games = new Games();
+        }
+        return games;
+    }
+    public void endGame(String codeGame ) throws GameNotFoundException{ 
+        getGame(codeGame);
         GAME.remove(codeGame);
-        SEND_MSG.disconectAll(codeGame);
-    }
-    public static Game createGame(Game game ) throws InvalidPlayerException{
-        GAME.put(game.getCode(), game);
-        return GAME.get(game.getCode());
     }
     
-    public static Game createGame() throws InvalidPlayerException{
-        return createGame(new Game());
+  
+    public Game createGame() throws InvalidPlayerException{
+        ExpirableGame eg = new ExpirableGame(new Game());
+        GAME.put(eg.getGame().getCode(), eg);
+        return eg.getGame();
         
     }
-    public static Player setReady(String code,String player) throws  GameException{
-       
-        return getGame(code).setReady(player);
-        
-    }
-    
-    public static Game startGame(String code) throws  GameException{
+
+    public Game setReady(String code,String player) throws  GameException{       
         Game g = getGame(code);
-        if(!g.isReady()){
-            throw new GameException("Some players are not ready yet!");
-        }            
-        g.setStartGame(true);        
+        g.setReady(player);
+        return g;        
+    }
+    
+    public Game startGame(String code) throws  GameException{
+        Game g = getGame(code);                 
+        g.startGame();        
         return g;
     }
     
-    public static Game setInitialBalance(String code,int value) throws  GameException{
-        getGame(code).setInitialBalance(value);
+    public Game setInitialBalance(String code,int value) throws  GameException{
+        getGame(code).setInitialBalance(value);        
         return getGame(code);
     }
     
-    public static Game joinGame(String code,Player player) throws  GameException{
-        if(!GAME.containsKey(code)){
-            throw new GameNotFoundException();
-        }
-        if(GAME.get(code).isStartGame()){
-            throw new GameException("Game has been started.");
-        }
-        Game g = GAME.get(code);
+    public Game joinGame(String code,Player player) throws  GameException{
+        Game g = getGame(code);
         g.addPlayers(player);        
         return g;
     }
     
-    public static Game getGame(String code) throws GameNotFoundException{
-        return Optional.ofNullable(GAME.get(code)).orElseThrow(()->new GameNotFoundException());
+    public Game transfer(String code, TransferDTO transferDTO) throws GameException{
+        Game g = getGame(code);
+        g.transfer(transferDTO);
+        return g;        
     }
     
+    public Game leaveGame (String code,String name) throws GameNotFoundException, PlayerNotFoundException{
+        Game g = getGame(code);
+        if(!g.leave(name)){
+            throw new PlayerNotFoundException("Player not found!");
+        }
+        return g;
+    }
+    
+    public Game getGame(String code) throws GameNotFoundException{
+        ExpirableGame eg = Optional.ofNullable(GAME.get(code)).orElseThrow(()->new GameNotFoundException());
+        eg.setLastUpdate();
+        return eg.game;
+    }
+    
+    public void clean(int timeExpire , int timeExpireGame){
+        if(GAME.isEmpty()){
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        GAME.values().removeIf(e ->e.expired(now,timeExpire,timeExpireGame));
+    }
+    
+    private class ExpirableGame{
+        @Getter
+        @Setter
+        private Game game;
+        @Getter
+        private final LocalDateTime startTime = LocalDateTime.now();
+        @Getter
+        private LocalDateTime lastUpdate = LocalDateTime.now();
+
+        public ExpirableGame(Game game) {
+            this.game = game;
+        }
+        
+        public void setLastUpdate(){
+            this.lastUpdate = LocalDateTime.now();
+        }           
+        public boolean expired(LocalDateTime timeNow, int timeExpire,int timeExpireGame){
+            long minExpireGame = ChronoUnit.MINUTES.between(startTime, timeNow);
+            long minExpire = ChronoUnit.MINUTES.between(lastUpdate, timeNow);
+            return minExpireGame >= timeExpireGame || minExpire >= timeExpire;
+        }
+    }
 }
