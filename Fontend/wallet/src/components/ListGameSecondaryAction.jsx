@@ -1,10 +1,6 @@
 
 import { IconButton, ListItemSecondaryAction } from "@material-ui/core";
 import { Send } from "@mui/icons-material";
-import { Dialog } from "@mui/material";
-
-import { style } from "../style/Css";
-
 
 export default function ListGameSecondaryAction({ openPopup, player }) {
     
